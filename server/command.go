@@ -53,6 +53,10 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		if err != nil {
 			p.postCommandResponse(args, err.Error())
 		}
+		err = p.RefreshSubscriptions()
+		if err != nil {
+			p.postCommandResponse(args, err.Error())
+		}
 	case "unsubscribe":
 		if len(parameters) != 1 {
 			p.postCommandResponse(args, "You have to pass the channel parameter")

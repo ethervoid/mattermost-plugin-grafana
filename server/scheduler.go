@@ -21,7 +21,9 @@ func (p *Plugin) RefreshSubscriptions() error {
 		return err
 	}
 
-	p.RefreshSubscription(subscriptions[0])
+	if len(subscriptions) > 0 {
+		p.RefreshSubscription(subscriptions[0])
+	}
 
 	return nil
 }

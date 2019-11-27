@@ -9,6 +9,9 @@ class ChannelSubHeader extends React.PureComponent {
     };
     
     render() {
+        if (this.props.image === null) {
+            return null;
+        }
         const image = 'data:image/png;base64,' + this.props.image;
         const style = {}
 

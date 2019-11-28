@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/mattermost/mattermost-server/model"
 )
@@ -19,16 +22,19 @@ type Subscription struct {
 	ChannelID         string
 	ChannelName       string
 	PanelURL          string
-	RefreshPeriod     int
+	TimeRange         int
+	PanelWidth        int
+	PanelHeight       int
 	LastTimeRefreshed int
 }
 
 // Subscribe blabla
-func (p *Plugin) Subscribe(teamID string, channelName string, panelURL string, refreshPeriod string) error {
-	refreshPeriodNumeric, err := strconv.Atoi(refreshPeriod)
+func (p *Plugin) Subscribe(teamID string, channelName string, panelURL string, timeRange string) error {
+	timeRangeInMinutes, err := strconv.Atoi(timeRange)
 	if err != nil {
 		return err
 	}
+	timeRangeInSeconds := timeRangeInMinutes * 60
 	channel, appError := p.API.GetChannelByName(teamID, channelName, false)
 	if appError != nil {
 		return errors.New(appError.Error())
@@ -37,7 +43,9 @@ func (p *Plugin) Subscribe(teamID string, channelName string, panelURL string, r
 		ChannelID:         channel.Id,
 		ChannelName:       channel.Name,
 		PanelURL:          panelURL,
-		RefreshPeriod:     refreshPeriodNumeric,
+		TimeRange:         timeRangeInSeconds,
+		PanelWidth:        400,
+		PanelHeight:       200,
 		LastTimeRefreshed: -1,
 	}
 	subscriptions, err := p.GetSubscriptions()
@@ -161,7 +169,11 @@ func (p *Plugin) RefreshSubscriptions() error {
 // RefreshSubscription blabla
 func (p *Plugin) RefreshSubscription(subscription *Subscription) error {
 	// TODO Retrieve the Grafana image and send it again using the websocket
-	panelImage, err := p.loadImageFromURL(subscription.PanelURL)
+	parsedURL, err := p.prepareSubscriptionURL(subscription)
+	if err != nil {
+		return err
+	}
+	panelImage, err := p.loadImageFromURL(parsedURL)
 	if err != nil {
 		return err
 	}
@@ -182,4 +194,22 @@ func (p *Plugin) RefreshSubscription(subscription *Subscription) error {
 	p.API.LogInfo("Image sent through the websocket...")
 
 	return nil
+}
+
+func (p *Plugin) prepareSubscriptionURL(subscription *Subscription) (string, error) {
+	urlParsed, err := url.Parse(subscription.PanelURL)
+	if err != nil {
+		return "", err
+	}
+	urlQuery := urlParsed.Query()
+	now := time.Now()
+	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", subscription.TimeRange))
+	then := now.Add(-duration)
+	urlQuery.Set("from", fmt.Sprintf("%d", then.UnixNano()/1000000))
+	urlQuery.Set("to", fmt.Sprintf("%d", now.UnixNano()/1000000))
+	urlQuery.Set("width", fmt.Sprintf("%d", subscription.PanelWidth))
+	urlQuery.Set("height", fmt.Sprintf("%d", subscription.PanelHeight))
+	urlParsed.RawQuery = urlQuery.Encode()
+	p.API.LogInfo("Parsed URL: " + urlParsed.String())
+	return urlParsed.String(), nil
 }

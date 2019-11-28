@@ -6,27 +6,10 @@ import (
 	"image"
 	"image/png"
 	"net/http"
-	"net/url"
-	"time"
 )
 
 func (p *Plugin) loadImageFromURL(panelURL string) (image.Image, error) {
-
-	urlParsed, err := url.Parse(panelURL)
-	if err != nil {
-		return nil, err
-	}
-	urlQuery := urlParsed.Query()
-	now := time.Now()
-	duration, _ := time.ParseDuration("1min")
-	then := now.Add(-duration)
-	urlQuery.Set("to", string(now.Unix()))
-	urlQuery.Set("from", string(then.Unix()))
-	urlQuery.Set("width", "400")
-	urlQuery.Set("height", "200")
-	urlParsed.RawQuery = urlQuery.Encode()
-	p.API.LogInfo("Calling URL: " + urlParsed.String())
-	resp, err := http.Get(urlParsed.String())
+	resp, err := http.Get(panelURL)
 	if err != nil {
 		return nil, err
 	}

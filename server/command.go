@@ -48,7 +48,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	case "subscribe":
 		//https://play.grafana.org/render/d-solo/000000012/grafana-play-home?orgId=1&from=&to=1574720321201&panelId=2&width=1000&height=500&tz=Europe%2FMadrid
 		if len(parameters) != 3 {
-			p.postCommandResponse(args, "You have to pass the panel channel, URL and refresh interval parameters")
+			p.postCommandResponse(args, "You have to pass the panel channel, URL and time range (in minutes) parameters")
 			return &model.CommandResponse{}, nil
 		}
 		err := p.Subscribe(args.TeamId, parameters[0], parameters[1], parameters[2])

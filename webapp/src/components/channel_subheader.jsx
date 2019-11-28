@@ -9,10 +9,10 @@ class ChannelSubHeader extends React.PureComponent {
     static propTypes = {
         image: PropTypes.string.isRequired,
         channelId: PropTypes.string,
+        channelTarget: PropTypes.string,
         show: PropTypes.bool.isRequired,
     };
     render() {
-        console.log(this.props);
         if (this.props.image === null) {
             return null;
         }

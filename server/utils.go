@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-func (p *Plugin) loadImageFromURL(panelUrl string) (image.Image, error) {
+func (p *Plugin) loadImageFromURL(panelURL string) (image.Image, error) {
 
-	urlParsed, err := url.Parse(panelUrl)
+	urlParsed, err := url.Parse(panelURL)
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +30,7 @@ func (p *Plugin) loadImageFromURL(panelUrl string) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	myImage, err := png.Decode(resp.Body)
 	if err != nil {
